@@ -6,6 +6,54 @@ import config as cfg
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+#########################################################
+#                       Generic                         #
+#########################################################
+
+def shuffle_dataset(x, y):
+    N = x.shape[0]
+    idxs = np.arange(N)
+    np.random.shuffle(idxs)
+    return x[idxs], y[idxs]
+
+
+def get_one_hot_encoding(labels):
+    N, = labels.shape
+    M = len(np.unique(labels))
+    
+    ret = np.zeros((N, M))
+    ret[np.arange(len(labels)), labels] = 1
+
+    return ret
+
+def split(pics, labels, p):
+    N = pics.shape[0]
+    N_train = int(p*N)
+
+    idxs = np.arange(N)
+
+    idxs_train = np.random.choice(idxs, N_train, replace=False)
+    idxs_val = np.setdiff1d(idxs, idxs_train, assume_unique=True)
+
+    return pics[idxs_train], labels[idxs_train], pics[idxs_val], labels[idxs_val]    
+
+
+def get_small_dataset(x, y, p=0.1):
+    N = x.shape[0]
+
+    new_N = int(p * N)
+
+    idxs = np.arange(N)
+    idxs = np.random.choice(idxs, new_N, replace=False)
+
+    new_x = x[idxs]
+    new_y = y[idxs]
+
+    return new_x, new_y
+
+#########################################################
+#             Simpsons Problem Specific                 #
+#########################################################
 
 def load_characters(min_imgs=800):
     i = 0
@@ -40,7 +88,10 @@ def load_pictures(map_characters, max_per_classs=None):
             img = img.astype(np.uint8)
             pics.append(img)
             labels.append(l)
-    return np.array(pics, dtype=np.uint8), np.array(labels, dtype=np.uint8) 
+    pics = np.array(pics, dtype=np.uint8)
+    labels = get_one_hot_encoding(np.array(labels, dtype=np.uint8))
+
+    return shuffle_dataset(pics, labels)
 
 
 def show_random(pics, labels, map_characters):
@@ -51,31 +102,10 @@ def show_random(pics, labels, map_characters):
     for i in range(1, columns*rows +1):
         idx = np.random.choice(range(N)) 
         img = pics[idx]
-        character = map_characters[labels[idx]]
+        character = map_characters[np.argmax(labels[idx])]
         fig.add_subplot(rows, columns, i)
         plt.imshow(img)
         plt.title(character)
     plt.show()
 
-
-def get_one_hot_encoding(labels):
-    N, = labels.shape
-    M = len(np.unique(labels))
-    
-    ret = np.zeros((N, M))
-    ret[np.arange(len(labels)), labels] = 1
-
-    return ret
-
-
-def split(pics, labels, p):
-    N = pics.shape[0]
-    N_train = int(p*N)
-
-    idxs = np.arange(N)
-
-    idxs_train = np.random.choice(idxs, N_train, replace=False)
-    idxs_val = np.setdiff1d(idxs, idxs_train, assume_unique=True)
-
-    return pics[idxs_train], labels[idxs_train], pics[idxs_val], labels[idxs_val]    
 
