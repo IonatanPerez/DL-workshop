@@ -5,6 +5,7 @@ import glob
 import config as cfg
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
 #########################################################
 #                       Generic                         #
@@ -94,7 +95,7 @@ def load_pictures(map_characters, max_per_classs=None):
     return shuffle_dataset(pics, labels)
 
 
-def show_random(pics, labels, map_characters):
+def show_random_characters(pics, labels, map_characters):
     N, _, _, _ = pics.shape
     fig=plt.figure(figsize=(20, 20))
     columns = 3
@@ -109,3 +110,39 @@ def show_random(pics, labels, map_characters):
     plt.show()
 
 
+#########################################################
+#                MNIST Problem Specific                 #
+#########################################################
+
+
+def load_mnist():
+    H, W = 28, 28
+
+    mnist = tf.contrib.learn.datasets.load_dataset("mnist")
+
+    pics_train = mnist.train.images
+    pics_train = pics_train.reshape((-1, H, W, 1))
+
+    labels_train = get_one_hot_encoding(np.asarray(mnist.train.labels, dtype=np.int32))
+
+    pics_test = mnist.test.images
+    pics_test = pics_test.reshape((-1, H, W, 1))
+
+    labels_test = get_one_hot_encoding(np.asarray(mnist.test.labels, dtype=np.int32))
+
+    return pics_train, labels_train, pics_test, labels_test
+
+
+def show_random_mnist(pics, labels):
+    N, _, _, _  = pics.shape
+    fig=plt.figure(figsize=(10, 10))
+    columns = 3
+    rows = 3
+    for i in range(1, columns*rows +1):
+        idx = np.random.choice(range(N)) 
+        img = pics[idx]
+        fig.add_subplot(rows, columns, i)
+        plt.imshow(np.squeeze(img), cmap='gray')
+        plt.axis('off')
+        plt.title(np.argmax(labels[idx]))
+    plt.show()
