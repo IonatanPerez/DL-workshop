@@ -56,11 +56,11 @@ def get_small_dataset(x, y, p=0.1):
 #             Simpsons Problem Specific                 #
 #########################################################
 
-def load_characters(min_imgs=800):
+def load_characters(data_dir, min_imgs=800):
     i = 0
     map_characters = {}
-    for char in os.listdir(cfg.DATA_DIR):
-        full_path = os.path.join(cfg.DATA_DIR, char)
+    for char in os.listdir(data_dir):
+        full_path = os.path.join(data_dir, char)
         if os.path.isfile(full_path) or char[0] == '.':
             continue
 
@@ -74,11 +74,11 @@ def load_characters(min_imgs=800):
     return map_characters
 
 
-def load_pictures(map_characters, max_per_classs=None):
+def load_pictures(data_dir, map_characters, max_per_classs=None):
     pics = []
     labels = []
     for l, c in map_characters.items():
-        pictures = glob.glob(os.path.join(cfg.DATA_DIR, "{}".format(c), "*"))
+        pictures = glob.glob(os.path.join(data_dir, "{}".format(c), "*"))
         for idx in tqdm(range(len(pictures)), desc="Loading {}".format(c)):
 
             if max_per_classs is not None and idx >= max_per_classs:
