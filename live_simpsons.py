@@ -7,9 +7,16 @@ import sys
 import matplotlib.pyplot as plt
 import time
 
+import pickle
 
 MNIST_MODEL = "./trained_models/simpsons/"
+CHARACTER_MAP = "./character_map.dump"
+
 H, W = 128, 128
+
+def load_characters():
+    f = open(CHARACTER_MAP, "rb", pickle.HIGHEST_PROTOCOL)
+    return pickle.load(f)
 
 
 def load_trained_model():
@@ -31,21 +38,26 @@ def softmax(_in):
     return np.exp(_in) / np.sum(np.exp(_in))
 
 
-def classify_character(img, sess, x, out):
-    img_h, img_w, _ = img.shape
+def classify_character(img, character_map, sess, x, out):
+    img_copy = img.copy()
+    img_h, img_w, _ = img_copy.shape
 
-    img = cv2.reshape(img, (H, W))
+    img_copy = cv2.resize(img_copy, (H, W))
 
-    graph_out, p = sess.run(out, feed_dict={x: np.reshape(img, (1, H, W))})
+    graph_out = sess.run(out, feed_dict={x: np.reshape(img_copy, (1, H, W, 3))})
 
-    # TODO -> find character
+    graph_out = softmax(np.squeeze(graph_out))
 
-    cv2.putText(img, str(character), (0, 0), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0))
+    character = character_map.get(np.argmax(graph_out))
+    p = max(graph_out)
+
+    if p > 0.1:
+        cv2.putText(img, character.replace("_", " "), (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0))
 
     return img
 
 
-def run(vid, sess, x, out):
+def run(vid, character_map, sess, x, out):
 
     FPS = 24
 
@@ -60,7 +72,7 @@ def run(vid, sess, x, out):
 
         h, w, c = frame.shape
 
-        img = classify_character(frame, sess, x, out)
+        img = classify_character(frame, character_map, sess, x, out)
 
         cv2.imshow("Frame", img)
 
@@ -78,6 +90,6 @@ def run(vid, sess, x, out):
 
 if __name__ == "__main__":
     vid = sys.argv[1]
-    # sess, x, out = load_trained_model()
-    sess, x, out = None, None, None
-    run(vid, sess, x, out)
+    sess, x, out = load_trained_model()
+    character_map = load_characters()
+    run(vid, character_map, sess, x, out)
