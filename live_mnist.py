@@ -109,18 +109,14 @@ def run(sess, x, out):
     cv2.namedWindow("Frame", cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty("Frame",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
 
-    cv2.namedWindow("Aux")
-
     while(True):
         ret, frame = cap.read()
 
         h, w, c = frame.shape
 
-        notated_img, roi = find_digits(frame, lambda img: reader(img, sess, x, out))
+        notated_img, _ = find_digits(frame, lambda img: reader(img, sess, x, out))
 
         cv2.imshow("Frame", notated_img)
-        if roi is not None:
-            cv2.imshow("Aux", roi)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
