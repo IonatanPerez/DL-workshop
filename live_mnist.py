@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 MNIST_MODEL = "./trained_models/mnist/"
 H, W = 28, 28
 
-EPSILON = 0.1
+EPSILON = 0.25
 
 MIN_AREA = 750
 
@@ -50,8 +50,7 @@ def find_digits(img, reader):
 
                 eps_h = int(EPSILON * h)
                 eps_w = int(EPSILON * w)
-                roi = gray[max(y - eps_h, 0): min(y + h + eps_h, img_h - 1), max(x - eps_w, 0): min(x + w + eps_w, img_w - 1)]
-                # roi = gray[y: y + h, x: x + w]
+                roi = gray[y: y + h, x: x + w]
 
                 digit, prob, digit_roi = reader(roi)
 
@@ -83,7 +82,15 @@ def reader(img, sess, x, out):
         pad = img_w - img_h
         img = np.pad(img, ((pad//2 , pad//2), (0,0)), 'constant', constant_values=0)
 
+    img_h, img_w = img.shape
+
+    pad_w = int(EPSILON * img_w)
+    pad_h = int(EPSILON * img_h)
+
+    img = np.pad(img, ((pad_h , pad_h), (pad_w,pad_w)), 'constant', constant_values=0)
+
     img = cv2.resize(img, (H, W), cv2.INTER_NEAREST)
+
     img_input = np.reshape(img, (1, H, W, 1))
 
     graph_out, = sess.run([out], feed_dict={x: img_input})
