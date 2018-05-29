@@ -39,6 +39,8 @@ def find_digits(img, reader):
 
     contours = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[1]
 
+    digit_roi = None
+
     for cnt in contours:
         area = cv2.contourArea(cnt)
         if cv2.contourArea(cnt) > MIN_AREA:
@@ -49,15 +51,16 @@ def find_digits(img, reader):
                 eps_h = int(EPSILON * h)
                 eps_w = int(EPSILON * w)
                 roi = gray[max(y - eps_h, 0): min(y + h + eps_h, img_h - 1), max(x - eps_w, 0): min(x + w + eps_w, img_w - 1)]
-                digit = cv2.resize(roi, (H, W), interpolation = cv2.INTER_AREA)
+                # roi = gray[y: y + h, x: x + w]
 
-                digit, prob = reader(digit)
+                digit, prob, digit_roi = reader(roi)
 
-                if prob > 0.5:
+                if prob > 0.1:
                     cv2.putText(img_copy, str(digit), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0))
                     cv2.rectangle(img_copy, (x,y), (x+w,y+h), (0, 0, 255), 2)
 
-    return img_copy
+
+    return img_copy, digit_roi
 
 def softmax(_in):
     return np.exp(_in) / np.sum(np.exp(_in))
@@ -66,12 +69,22 @@ def reader(img, sess, x, out):
     img = img.copy()
     img = 255 - img
 
-    ret, _ = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    img_h, img_w = img.shape
 
+    ret, _ = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     img[img <= ret] = 0
 
+    img = (img - np.min(img)) / (np.max(img) - np.min(img))
+
+    if img_h > img_w:
+        pad = img_h - img_w
+        img = np.pad(img, ((0,0), (pad//2, pad//2)), 'constant', constant_values=0)
+    else:
+        pad = img_w - img_h
+        img = np.pad(img, ((pad//2 , pad//2), (0,0)), 'constant', constant_values=0)
+
+    img = cv2.resize(img, (H, W), cv2.INTER_NEAREST)
     img_input = np.reshape(img, (1, H, W, 1))
-    img_input = img_input / np.max(img_input)
 
     graph_out, = sess.run([out], feed_dict={x: img_input})
 
@@ -80,7 +93,7 @@ def reader(img, sess, x, out):
     char = np.argmax(graph_out)
     prob = max(softmax(graph_out))
 
-    return char, prob
+    return char, prob, img
 
 
 def run(sess, x, out):
@@ -89,14 +102,18 @@ def run(sess, x, out):
     cv2.namedWindow("Frame", cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty("Frame",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
 
+    cv2.namedWindow("Aux")
+
     while(True):
         ret, frame = cap.read()
 
         h, w, c = frame.shape
 
-        notated_img = find_digits(frame, lambda img: reader(img, sess, x, out))
+        notated_img, roi = find_digits(frame, lambda img: reader(img, sess, x, out))
 
         cv2.imshow("Frame", notated_img)
+        if roi is not None:
+            cv2.imshow("Aux", roi)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
