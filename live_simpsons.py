@@ -10,7 +10,7 @@ import time
 import pickle
 
 MNIST_MODEL = "./trained_models/simpsons/"
-CHARACTER_MAP = "./character_map.dump"
+CHARACTER_MAP = "./dumps/character_map.dump"
 
 H, W = 128, 128
 
