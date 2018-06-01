@@ -40,6 +40,7 @@ def softmax(_in):
 
 def classify_character(img, character_map, sess, x, out):
     img_copy = img.copy()
+    img_copy = cv2.cvtColor(img_copy, cv2.COLOR_BGR2RGB)
     img_h, img_w, _ = img_copy.shape
 
     img_copy = cv2.resize(img_copy, (H, W))
@@ -51,7 +52,7 @@ def classify_character(img, character_map, sess, x, out):
     character = character_map.get(np.argmax(graph_out))
     p = max(graph_out)
 
-    if p > 0.1:
+    if p > 0.8:
         cv2.putText(img, character.replace("_", " "), (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0))
 
     return img

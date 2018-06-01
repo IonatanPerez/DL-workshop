@@ -2,15 +2,17 @@ import numpy as np
 import cv2
 import tensorflow as tf
 import os
+import sys
 
 import matplotlib.pyplot as plt
 
+# Disable tensorflow logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 MNIST_MODEL = "./trained_models/mnist/"
+
 H, W = 28, 28
-
 EPSILON = 0.25
-
 MIN_AREA = 750
 
 def load_trained_model():
@@ -55,7 +57,7 @@ def find_digits(img, reader):
                 digit, prob, digit_roi = reader(roi)
 
                 if prob > 0.1:
-                    cv2.putText(img_copy, str(digit), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0))
+                    cv2.putText(img_copy, str(digit), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0))
                     cv2.rectangle(img_copy, (x,y), (x+w,y+h), (0, 0, 255), 2)
 
 
@@ -103,8 +105,8 @@ def reader(img, sess, x, out):
     return char, prob, img
 
 
-def run(sess, x, out):
-    cap = cv2.VideoCapture(0)
+def run(i, sess, x, out):
+    cap = cv2.VideoCapture(i)
 
     cv2.namedWindow("Frame", cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty("Frame",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
@@ -124,6 +126,31 @@ def run(sess, x, out):
     cv2.destroyAllWindows()
 
 
+def test_camera():
+    cameras = []
+    for i in range(3):
+        cap = cv2.VideoCapture(i)
+        ret, frame = cap.read()
+        try:
+            h, w, c = frame.shape
+        except AttributeError:
+            continue
+        cap.release()
+        cameras.append(i)
+
+    return cameras
+
 if __name__ == "__main__":
+    cameras = test_camera()
+    if len(cameras) == 0:
+        print("Webcam not detected.")
+        sys.exit(1)
+
+    if len(cameras) == 1:
+        print("Using webcam # {}".format(cameras[0]))
+        i = cameras[0]
+    else:
+        i = int(input("{} cameras detected. Provide an index of the one to use ({} to {}): ".format(len(cameras), 0, len(cameras)-1)))
+
     sess, x, out = load_trained_model()
-    run(sess, x, out)
+    run(i, sess, x, out)
