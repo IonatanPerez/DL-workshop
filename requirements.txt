@@ -1,8 +1,9 @@
-ipython==6.3.1
-jupyter==1.0.0
-matplotlib==2.2.2
-notebook==5.4.1
-numpy==1.14.2
-scikit-image==0.13.1
-tensorflow==1.7.0
-tqdm==4.21.0
+ipython
+jupyter
+matplotlib
+notebook
+numpy
+scikit-image
+tensorflow
+tqdm
+opencv-python
