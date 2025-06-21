@@ -216,11 +216,12 @@ def infinite_train(model, times, n_hidden, input_size, batch_size, print_each):
 
 if __name__ == "__main__":
     print("Cargando la data. Esto puede tardar unos segundos...")
-    ps = load_data("./speeches/")
+    ps = load_data("/speeches/")
     data, lens, char_to_ix, ix_to_char = preprocess(ps)
 
     BATCH_SIZE = 64
     INPUT_SIZE = len(ix_to_char)
+
     TIMES = 32
     N_HIDDEN = 512
 
